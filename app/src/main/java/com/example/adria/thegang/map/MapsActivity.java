@@ -1,10 +1,18 @@
 package com.example.adria.thegang.map;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+
+import com.example.adria.thegang.model.POI;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlacePicker;
 
 import com.example.adria.thegang.R;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -17,6 +25,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -34,18 +43,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private Button button;
 
+    private Button buttonPlacePicker;
+
     private SupportMapFragment mapFragment;
 
     private OnMapReadyCallback mOnMapReadyCallback;
+
+    private Activity activity;
+
+    private int PLACE_PICKER_REQUEST = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+        activity = this;
+
         mOnMapReadyCallback = this;
-
-
 
         button = (Button) findViewById(R.id.button);
         button.setEnabled(false);
@@ -59,8 +74,43 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
+        buttonPlacePicker = (Button) findViewById(R.id.button_place_picker);
+        buttonPlacePicker.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+
+                try {
+                    startActivityForResult(builder.build(activity), PLACE_PICKER_REQUEST);
+                } catch (GooglePlayServicesRepairableException e) {
+                    e.printStackTrace();
+                } catch (GooglePlayServicesNotAvailableException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
         mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         mLocationListener = new MyLocationListener();
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PLACE_PICKER_REQUEST) {
+            if (resultCode == RESULT_OK) {
+                Place place = PlacePicker.getPlace(data, this);
+                POI poi = new POI();
+                poi.setName(place.getName().toString());
+                poi.setLatitude(place.getLatLng().latitude);
+                poi.setLongitude(place.getLatLng().longitude);
+
+
+                Log.d("THEGANGPOI", poi.getName()+" "+poi.getLatitude()+""+poi.getLongitude());
+
+                String toastMsg = String.format("Place: %s", place.getName());
+                Toast.makeText(this, toastMsg, Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
 

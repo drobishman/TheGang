@@ -18,8 +18,14 @@
             android:id="@+id/button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom|left"
+            android:layout_gravity="top|left"
             android:text="@string/my_position" />
+        <Button
+            android:id="@+id/button_place_picker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|right"
+            android:text="@string/place_picker" />
 
     </fragment>
 
