@@ -142,7 +142,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     protected void onResume() {
         super.onResume();
-        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 10, mLocationListener);
+        if ((android.provider.Settings.Secure.LOCATION_MODE == "LOCATION_MODE_HIGH_ACCURACY")||(android.provider.Settings.Secure.LOCATION_MODE=="LOCATION_MODE_SENSORS_ONLY")) {
+            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 10, mLocationListener);
+        }else if (android.provider.Settings.Secure.LOCATION_MODE == "LOCATION_MODE_BATTERY_SAVING")
+        mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000, 10, mLocationListener);
         if (mapFragment != null) mapFragment.getMapAsync(mOnMapReadyCallback);
     }
 
