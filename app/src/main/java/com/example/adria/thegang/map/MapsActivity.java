@@ -8,7 +8,6 @@ import android.location.LocationManager;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
-import com.example.adria.thegang.model.POI;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.location.places.Place;
@@ -29,21 +28,15 @@ import android.widget.Toast;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
-    private GoogleMap mMap;
-
     private LocationManager mLocationManager;
 
     private MyLocationListener mLocationListener;
 
     private boolean mDataAvailable;
 
-    private double mLatitude;
-
-    private double mLongitude;
+    private LatLng myLocation;
 
     private Button button;
-
-    private Button buttonPlacePicker;
 
     private SupportMapFragment mapFragment;
 
@@ -52,6 +45,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Activity activity;
 
     private int PLACE_PICKER_REQUEST = 1;
+
+    private Place place;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,7 +69,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
-        buttonPlacePicker = (Button) findViewById(R.id.button_place_picker);
+        Button buttonPlacePicker = (Button) findViewById(R.id.button_place_picker);
         buttonPlacePicker.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -98,14 +93,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == PLACE_PICKER_REQUEST) {
             if (resultCode == RESULT_OK) {
-                Place place = PlacePicker.getPlace(data, this);
-                POI poi = new POI();
-                poi.setName(place.getName().toString());
-                poi.setLatitude(place.getLatLng().latitude);
-                poi.setLongitude(place.getLatLng().longitude);
+                place = PlacePicker.getPlace(data, this);
 
-
-                Log.d("THEGANGPOI", poi.getName()+" "+poi.getLatitude()+""+poi.getLongitude());
+                Log.d("THEGANGPOI", place.getName() + " " + place.getLatLng());
 
                 String toastMsg = String.format("Place: %s", place.getName());
                 Toast.makeText(this, toastMsg, Toast.LENGTH_LONG).show();
@@ -126,34 +116,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
 
 
-        mMap = googleMap;
+        GoogleMap mMap = googleMap;
 
         mMap.clear();
 
-        Log.d("longitudeRECEIVED", "" + mLongitude);
-        Log.d("latitudeRECEIVED", "" + mLatitude);
+        if (place != null) {
+            mMap.addMarker(new MarkerOptions().position(place.getLatLng()).title(place.getName().toString()));
+        }
 
-        LatLng myLocation = new LatLng(mLatitude, mLongitude);
         mMap.addMarker(new MarkerOptions().position(myLocation).title("Current Location"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(myLocation));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(15.5f));
-
     }
 
     protected void onResume() {
         super.onResume();
-        if ((android.provider.Settings.Secure.LOCATION_MODE == "LOCATION_MODE_HIGH_ACCURACY")||(android.provider.Settings.Secure.LOCATION_MODE=="LOCATION_MODE_SENSORS_ONLY")) {
-            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 10, mLocationListener);
-        }else if (android.provider.Settings.Secure.LOCATION_MODE == "LOCATION_MODE_BATTERY_SAVING")
+
+        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 10, mLocationListener);
         mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000, 10, mLocationListener);
+        mLocationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 1000, 10, mLocationListener);
         if (mapFragment != null) mapFragment.getMapAsync(mOnMapReadyCallback);
     }
-
-    ;
 
     @Override
     protected void onPause() {
         super.onPause();
+
         mLocationManager.removeUpdates(mLocationListener);
     }
 
@@ -167,11 +155,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 button.setEnabled(true);
             }
 
-            mLatitude = location.getLatitude();
-            mLongitude = location.getLongitude();
-
-            Log.d("longitudeREAD", "" + mLongitude);
-            Log.d("latitudeREAD", "" + mLatitude);
+          myLocation = new LatLng(location.getLatitude(),location.getLongitude());
         }
 
         @Override
