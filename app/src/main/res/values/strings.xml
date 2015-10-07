@@ -4,5 +4,6 @@
     <string name="title_activity_main">MainActivity</string>
     <string name="my_position">my position</string>
     <string name="place_picker">place picker</string>
+    <string name="title_activity_maps_activity_test">Map</string>
 
 </resources>
