@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.example.adria.thegang"
-        minSdkVersion 22
+        minSdkVersion 21
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"
@@ -26,4 +26,5 @@ dependencies {
     compile 'com.google.android.gms:play-services:8.1.0'
     compile 'com.android.support:design:22.2.1'
     compile 'com.google.code.gson:gson:2.2.+'
+    compile 'com.facebook.android:facebook-android-sdk:4.6.0'
 }

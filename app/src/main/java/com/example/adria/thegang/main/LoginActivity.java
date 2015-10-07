@@ -17,6 +17,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -26,12 +27,26 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.example.adria.thegang.R;
 import com.example.adria.thegang.map.MapsActivity;
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.FacebookSdk;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.appevents.AppEventsLogger;
+import com.facebook.login.LoginResult;
+import com.facebook.login.widget.LoginButton;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 
 /**
@@ -44,7 +59,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * TODO: remove after connecting to a real authentication system.
      */
     private static final String[] DUMMY_CREDENTIALS = new String[]{
-            "foo@example.com:hello", "bar@example.com:world","ciao@:mondo"
+            "foo@example.com:hello", "bar@example.com:world", "ciao@:mondo"
     };
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
@@ -56,6 +71,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+
+    // facebook
+    protected LoginButton loginButtonFB;
+    private CallbackManager callbackManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,7 +106,59 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+
+        FacebookSdk.sdkInitialize(getApplicationContext());
+        callbackManager = CallbackManager.Factory.create();
+        loginButtonFB = (LoginButton) findViewById(R.id.fb_login_button);
+        loginButtonFB.setReadPermissions(Arrays.asList("public_profile, email"));
+        loginButtonFB.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+
+            @Override
+            public void onSuccess(LoginResult loginResult) {
+                Toast.makeText(getBaseContext(), "Facebook Login Success", Toast.LENGTH_SHORT);
+
+                GraphRequest meRequest = GraphRequest.newMeRequest(
+                        loginResult.getAccessToken(),
+                        new GraphRequest.GraphJSONObjectCallback() {
+                            @Override
+                            public void onCompleted(JSONObject jsonObject, GraphResponse response) {
+                                try {
+                                    Toast.makeText(getBaseContext(), "Welcome " + jsonObject.getString("first_name") + " " + jsonObject.getString("last_name"), Toast.LENGTH_SHORT).show();
+                                    Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
+                                    startActivity(intent);
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                        });
+                Bundle parameters = new Bundle();
+                parameters.putString("fields", "id, first_name, last_name, email, gender");
+                meRequest.setParameters(parameters);
+                meRequest.executeAsync();
+            }
+
+            @Override
+            public void onCancel() {
+                Toast.makeText(getBaseContext(), "Facebook Login Canceled", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(FacebookException error) {
+                Toast.makeText(getBaseContext(), "Facebook Login Error", Toast.LENGTH_SHORT).show();
+            }
+        });
+
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        super.onActivityResult(requestCode, resultCode, data);
+        // manage login results
+        callbackManager.onActivityResult(requestCode, resultCode, data);
+    }
+
 
     private void populateAutoComplete() {
         getLoaderManager().initLoader(0, null, this);
@@ -302,6 +373,22 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             mAuthTask = null;
             showProgress(false);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Logs 'install' and 'app activate' App Events.
+        AppEventsLogger.activateApp(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        // Logs 'app deactivate' App Event.
+        AppEventsLogger.deactivateApp(this);
     }
 }
 

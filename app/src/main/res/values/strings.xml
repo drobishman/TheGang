@@ -20,4 +20,7 @@
         completions."
     </string>
 
+    <!-- Strings related facebook authentication-->
+    <string name="facebook_app_id">843037172484094</string>
+
 </resources>

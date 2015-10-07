@@ -23,8 +23,12 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -46,10 +50,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private int PLACE_PICKER_REQUEST = 1;
 
-    private Place place;
+    private List<Place> places = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN|WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
@@ -93,12 +98,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == PLACE_PICKER_REQUEST) {
             if (resultCode == RESULT_OK) {
-                place = PlacePicker.getPlace(data, this);
-
-                Log.d("THEGANGPOI", place.getName() + " " + place.getLatLng());
-
-                String toastMsg = String.format("Place: %s", place.getName());
-                Toast.makeText(this, toastMsg, Toast.LENGTH_LONG).show();
+                places.add(PlacePicker.getPlace(data, this));
             }
         }
     }
@@ -120,11 +120,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         mMap.clear();
 
-        if (place != null) {
-            mMap.addMarker(new MarkerOptions().position(place.getLatLng()).title(place.getName().toString()));
+        if (!places.isEmpty()) {
+            for(Place temp:places)
+            mMap.addMarker(new MarkerOptions().position(temp.getLatLng()).title(temp.getName().toString()));
         }
 
-        mMap.addMarker(new MarkerOptions().position(myLocation).title("Current Location"));
+        mMap.addMarker(new MarkerOptions().position(myLocation).title("My Location"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(myLocation));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(15.5f));
     }
