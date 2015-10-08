@@ -57,6 +57,7 @@ public class DbAdapter {
     //update a profile
     public boolean updateProfile(long ID, String name, String surname, String sex, String birth_date) {
         ContentValues updateValues = createContentValues(name, surname, sex, birth_date);
+        database.update(DATABASE_TABLE, )
         return database.update(DATABASE_TABLE, updateValues, KEY_ID + "=" + ID, null) > 0;
     }
 
@@ -66,10 +67,9 @@ public class DbAdapter {
     }
 
     //fetch profiles filter by a string
-    public Cursor fetchProfileByFilter(String filter) {
-        Cursor mCursor = database.query(true, DATABASE_TABLE, new String[]{
-                        KEY_ID, KEY_FIRST_NAME, KEY_LAST_NAME, KEY_GENDER, KEY_EMAIL},
-                KEY_FIRST_NAME + " like '%" + filter + "%'", null, null, null, null, null);
-        return mCursor;
+    public String getEmail() {
+        String[] columns = {KEY_EMAIL};
+        Cursor res = database.query(DATABASE_TABLE, columns, null, columns, null, null, null);
+        return res.toString();
     }
 }
