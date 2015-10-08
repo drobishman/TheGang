@@ -57,7 +57,6 @@ public class DbAdapter {
     //update a profile
     public boolean updateProfile(long ID, String name, String surname, String sex, String birth_date) {
         ContentValues updateValues = createContentValues(name, surname, sex, birth_date);
-        database.update(DATABASE_TABLE, )
         return database.update(DATABASE_TABLE, updateValues, KEY_ID + "=" + ID, null) > 0;
     }
 
