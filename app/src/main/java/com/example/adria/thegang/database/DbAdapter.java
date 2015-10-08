@@ -9,14 +9,14 @@ import android.database.sqlite.SQLiteDatabase;
 /**
  * Created by Alessandro on 08/10/15.
  */
-
 public class DbAdapter {
+    @SuppressWarnings("unused")
     public static final String KEY_ID = "id";
     public static final String KEY_FIRST_NAME = "first_name";
     public static final String KEY_LAST_NAME = "last_name";
     public static final String KEY_GENDER = "gender";
     public static final String KEY_EMAIL = "email";
-    @SuppressWarnings("unused")
+
     private static final String LOG_TAG = DbAdapter.class.getSimpleName();
     // Database fields
     private static final String DATABASE_TABLE = "profile";
