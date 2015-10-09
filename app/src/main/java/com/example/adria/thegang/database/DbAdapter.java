@@ -66,10 +66,9 @@ public class DbAdapter {
     }
 
     //fetch profiles filter by a string
-    public Cursor fetchProfileByFilter(String filter) {
-        Cursor mCursor = database.query(true, DATABASE_TABLE, new String[]{
-                        KEY_ID, KEY_FIRST_NAME, KEY_LAST_NAME, KEY_GENDER, KEY_EMAIL},
-                KEY_FIRST_NAME + " like '%" + filter + "%'", null, null, null, null, null);
-        return mCursor;
+    public String getEmail() {
+        String[] columns = {KEY_EMAIL};
+        Cursor res = database.query(DATABASE_TABLE, columns, null, columns, null, null, null);
+        return res.toString();
     }
 }
