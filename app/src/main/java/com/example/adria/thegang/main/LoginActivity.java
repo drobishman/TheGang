@@ -17,6 +17,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -75,12 +76,12 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        attemptLogin();
         setContentView(R.layout.activity_login);
-
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+
+
 
         FacebookSdk.sdkInitialize(getApplicationContext());
         callbackManager = CallbackManager.Factory.create();
@@ -99,7 +100,16 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                             public void onCompleted(JSONObject jsonObject, GraphResponse response) {
                                 try {
                                     Toast.makeText(getBaseContext(), "Welcome " + jsonObject.getString("first_name") + " " + jsonObject.getString("last_name"), Toast.LENGTH_SHORT).show();
-                                    mAuthTask = new UserLoginTask(jsonObject.getString("email"), jsonObject.getString("first_name"), jsonObject.getString("last_name"), jsonObject.getString("gender"),false,true);
+                                    mUser = new User(
+                                            jsonObject.getString("email"),
+                                            jsonObject.getString("first_name"),
+                                            jsonObject.getString("last_name"),
+                                            jsonObject.getString("gender"),
+                                            false,
+                                            true
+                                    );
+
+                                    mAuthTask = new UserLoginTask();
                                     mAuthTask.execute((Void) null);
                                 } catch (JSONException e) {
                                     e.printStackTrace();
@@ -142,14 +152,23 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * errors are presented and no actual login attempt is made.
      */
     private void attemptLogin() {
-        if (mAuthTask != null) {
+        if (mAuthTask != null)
             return;
-        }else{
-            dbAdapter.isUser();
-            Toast.makeText(this,"Login gia' effettuato",Toast.LENGTH_SHORT).show();
-        }
-
         showProgress(true);
+    }
+
+    /**
+     * Check for user in local database to skip login autenthication
+     */
+    private void checkDatabase() {
+
+        if (mUser == null && dbAdapter.isUser()) {
+            Toast.makeText(this, "Preleva utente dal database locale", Toast.LENGTH_SHORT).show();
+            //mUser = dbAdapter.getUser();
+            Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
+            intent.putExtra("user", mUser);
+            startActivity(intent);
+        }
     }
 
     /**
@@ -236,17 +255,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      */
     public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
 
-
-        UserLoginTask(String email, String firstName, String lastName, String gender, boolean googlePlus, boolean facebook) {
-            mUser = new User();
-            mUser.setmEmail(email);
-            mUser.setmFirstName(firstName);
-            mUser.setmLastName(lastName);
-            mUser.setmGender(gender);
-            mUser.setIsGooglePlus(googlePlus);
-            mUser.setIsFacebook(facebook);
-        }
-
         @Override
         protected Boolean doInBackground(Void... params) {
             // TODO: attempt authentication against a network service.
@@ -272,8 +280,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 dbAdapter.open();
                 dbAdapter.createUser(mUser);
 
+                dbAdapter.isUser();
+
                 Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
-                intent.putExtra("user",mUser);
+                intent.putExtra("user", mUser);
                 startActivity(intent);
             }
         }

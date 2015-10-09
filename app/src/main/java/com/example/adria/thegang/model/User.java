@@ -14,6 +14,15 @@ public class User implements Serializable {
     private  boolean isGooglePlus;
     private  boolean isFacebook;
 
+    public User(String email,String firstName,String lastName,String gender,boolean googlePlus,boolean facebook){
+        this.setmEmail(email);
+        this.setmFirstName(firstName);
+        this.setmLastName(lastName);
+        this.setmGender(gender);
+        this.setIsGooglePlus(googlePlus);
+        this.setIsFacebook(facebook);
+    }
+
     public String getmEmail() {
         return mEmail;
     }

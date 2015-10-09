@@ -4,12 +4,6 @@
     android:orientation="vertical"
     tools:context="com.example.adria.thegang.maps.MapsActivity">
 
-    <TextView
-        android:id="@+id/user"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|left"/>
-
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/map"
@@ -18,17 +12,23 @@
         android:layout_height="match_parent"
         tools:context=".MapsActivity">
 
+        <TextView
+            android:id="@+id/user"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center"/>
+
         <Button
             android:id="@+id/button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="top|left"
+            android:layout_gravity="bottom|left"
             android:text="@string/my_position" />
         <Button
             android:id="@+id/button_place_picker"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="top|right"
+            android:layout_gravity="bottom|right"
             android:text="@string/place_picker" />
 
     </fragment>

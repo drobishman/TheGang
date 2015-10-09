@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import com.example.adria.thegang.model.User;
 
@@ -82,7 +83,9 @@ public class DbAdapter {
     //fetch profiles filter by a string
     public boolean isUser() {
         String[] columns = {KEY_ID};
-        Cursor res = database.query(DATABASE_TABLE, columns, null, null, null, null, null);
+        Cursor res = database.rawQuery("select * from "+DATABASE_TABLE,null);
+        res.moveToFirst();
+        Log.d("THEGANG",res.getString(1)+" "+res.getString(2));
         return res.getCount() > 0;
     }
 }
