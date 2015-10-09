@@ -49,14 +49,14 @@ public class DbAdapter {
     }
 
     //
-    public long createProfile(String name, String last_name, String gender, String email) {
-        ContentValues initialValues = createContentValues(name, last_name, gender, email);
+    public long createProfile(String first_name, String last_name, String gender, String email) {
+        ContentValues initialValues = createContentValues(first_name, last_name, gender, email);
         return database.insertOrThrow(DATABASE_TABLE, null, initialValues);
     }
 
     //update a profile
-    public boolean updateProfile(long ID, String name, String last_name, String sex, String birth_date) {
-        ContentValues updateValues = createContentValues(name, last_name, sex, birth_date);
+    public boolean updateProfile(long ID, String first_name, String last_name, String sex, String birth_date) {
+        ContentValues updateValues = createContentValues(first_name, last_name, sex, birth_date);
         return database.update(DATABASE_TABLE, updateValues, KEY_ID + "=" + ID, null) > 0;
     }
 
