@@ -54,26 +54,26 @@ public class DbAdapter {
     }
 
     //
-    public long createProfile(String first_name, String last_name, String gender, String email, boolean google_plus, boolean facebook) {
+    public long createUser(String first_name, String last_name, String gender, String email, boolean google_plus, boolean facebook) {
         ContentValues initialValues = createContentValues(first_name, last_name, gender, email, google_plus, facebook);
         return database.insertOrThrow(DATABASE_TABLE, null, initialValues);
     }
 
     //update a profile
-    public boolean updateProfile(long ID, String first_name, String last_name, String gender, String email, boolean google_plus, boolean facebook) {
+    public boolean updateUser(long ID, String first_name, String last_name, String gender, String email, boolean google_plus, boolean facebook) {
         ContentValues updateValues = createContentValues(first_name, last_name, gender, email, google_plus, facebook);
         return database.update(DATABASE_TABLE, updateValues, KEY_ID + "=" + ID, null) > 0;
     }
 
     //delete a profile
-    public boolean deleteProfile(long ID) {
+    public boolean deleteUser(long ID) {
         return database.delete(DATABASE_TABLE, KEY_ID + "=" + ID, null) > 0;
     }
 
     //fetch profiles filter by a string
-    public String getEmail() {
+    public boolean isUser() {
         String[] columns = {KEY_EMAIL};
-        Cursor res = database.query(DATABASE_TABLE, columns, null, columns, null, null, null);
-        return res.toString();
+        Cursor res = database.query(DATABASE_TABLE, null, null, null, null, null, null);
+        return res.getCount() > 0;
     }
 }
