@@ -45,12 +45,19 @@ public class DbAdapter {
 
     private ContentValues createContentValues(User mUser) {
         ContentValues values = new ContentValues();
-        values.put(KEY_FIRST_NAME, mUser.getmFirstName());
-        values.put(KEY_LAST_NAME, mUser.getmLastName());
-        values.put(KEY_GENDER, mUser.getmGender());
-        values.put(KEY_EMAIL, mUser.getmEmail());
-        values.put(KEY_GOOGLE_PLUS, mUser.isGooglePlus());
-        values.put(KEY_FACEBOOK, mUser.isFacebook());
+        String first_name = mUser.getmFirstName();
+        String last_name = mUser.getmLastName();
+        String gender = mUser.getmGender();
+        String email = mUser.getmEmail();
+        boolean googlePlus = mUser.isGooglePlus();
+        boolean facebook = mUser.isFacebook();
+
+        values.put(KEY_FIRST_NAME, first_name);
+        values.put(KEY_LAST_NAME, last_name);
+        values.put(KEY_GENDER, gender);
+        values.put(KEY_EMAIL, email);
+        values.put(KEY_GOOGLE_PLUS, googlePlus);
+        values.put(KEY_FACEBOOK, facebook);
 
         return values;
     }
@@ -75,7 +82,7 @@ public class DbAdapter {
     //fetch profiles filter by a string
     public boolean isUser() {
         String[] columns = {KEY_ID};
-        Cursor res = database.query(DATABASE_TABLE,columns,null,columns,null,null,null);
+        Cursor res = database.query(DATABASE_TABLE, columns, null, null, null, null, null);
         return res.getCount() > 0;
     }
 }
