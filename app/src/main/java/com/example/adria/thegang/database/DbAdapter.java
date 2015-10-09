@@ -16,6 +16,9 @@ public class DbAdapter {
     public static final String KEY_LAST_NAME = "last_name";
     public static final String KEY_GENDER = "gender";
     public static final String KEY_EMAIL = "email";
+    public static final String KEY_GOOGLE_PLUS = "google_plus";
+    public static final String KEY_FACEBOOK = "facebook";
+
 
     private static final String LOG_TAG = DbAdapter.class.getSimpleName();
     // Database fields
@@ -38,25 +41,27 @@ public class DbAdapter {
         dbHelper.close();
     }
 
-    private ContentValues createContentValues(String first_name, String last_name, String gender, String email) {
+    private ContentValues createContentValues(String first_name, String last_name, String gender, String email, boolean google_plus, boolean facebook) {
         ContentValues values = new ContentValues();
         values.put(KEY_FIRST_NAME, first_name);
         values.put(KEY_LAST_NAME, last_name);
         values.put(KEY_GENDER, gender);
         values.put(KEY_EMAIL, email);
+        values.put(KEY_GOOGLE_PLUS, google_plus);
+        values.put(KEY_FACEBOOK, facebook);
 
         return values;
     }
 
     //
-    public long createProfile(String first_name, String last_name, String gender, String email) {
-        ContentValues initialValues = createContentValues(first_name, last_name, gender, email);
+    public long createProfile(String first_name, String last_name, String gender, String email, boolean google_plus, boolean facebook) {
+        ContentValues initialValues = createContentValues(first_name, last_name, gender, email, google_plus, facebook);
         return database.insertOrThrow(DATABASE_TABLE, null, initialValues);
     }
 
     //update a profile
-    public boolean updateProfile(long ID, String first_name, String last_name, String gender, String email) {
-        ContentValues updateValues = createContentValues(first_name, last_name, gender, email);
+    public boolean updateProfile(long ID, String first_name, String last_name, String gender, String email, boolean google_plus, boolean facebook) {
+        ContentValues updateValues = createContentValues(first_name, last_name, gender, email, google_plus, facebook);
         return database.update(DATABASE_TABLE, updateValues, KEY_ID + "=" + ID, null) > 0;
     }
 

@@ -14,7 +14,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 1;
 
     // Lo statement SQL di creazione del database
-    private static final String DATABASE_CREATE = "create table profile (id integer primary key autoincrement, first_name text not null, last_name text not null, gender text not null, email text not null)";
+    private static final String DATABASE_CREATE = "create table profile (id integer primary key autoincrement, first_name text not null, last_name text not null, gender text not null, email text not null, google_plus bool not null, facebook bool not null)";
 
     // Costruttore
     public DatabaseHelper(Context context) {
