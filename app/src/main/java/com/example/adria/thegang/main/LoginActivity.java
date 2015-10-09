@@ -3,21 +3,37 @@ package com.example.adria.thegang.main;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.app.LoaderManager.LoaderCallbacks;
-import android.content.CursorLoader;
 import android.content.Intent;
+import android.support.v7.app.AppCompatActivity;
+import android.app.LoaderManager.LoaderCallbacks;
+
+import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
+
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.inputmethod.EditorInfo;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import com.example.adria.thegang.R;
+import com.example.adria.thegang.database.DatabaseHelper;
 import com.example.adria.thegang.database.DbAdapter;
 import com.example.adria.thegang.map.MapsActivity;
 import com.example.adria.thegang.model.User;
@@ -34,32 +50,32 @@ import com.facebook.login.widget.LoginButton;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 
 /**
  * A login screen that offers login via email/password.
  */
 public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<Cursor> {
 
-    // database
-    protected final DbAdapter dbAdapter = new DbAdapter(this);
-    // facebook
-    protected LoginButton mFBLoginButton;
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     private UserLoginTask mAuthTask = null;
     private User mUser;
+
     private View mProgressView;
     private View mLoginFormView;
+
+    // facebook
+    protected LoginButton mFBLoginButton;
     private CallbackManager callbackManager;
+
+    // database
+    protected final DbAdapter dbAdapter = new DbAdapter(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        attemptLogin();
         setContentView(R.layout.activity_login);
 
 
@@ -128,7 +144,11 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private void attemptLogin() {
         if (mAuthTask != null) {
             return;
+        }else{
+            dbAdapter.isUser();
+            Toast.makeText(this,"Login gia' effettuato",Toast.LENGTH_SHORT).show();
         }
+
         showProgress(true);
     }
 
@@ -200,22 +220,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        // Logs 'install' and 'app activate' App Events.
-        AppEventsLogger.activateApp(this);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-
-        // Logs 'app deactivate' App Event.
-        AppEventsLogger.deactivateApp(this);
-    }
-
     private interface ProfileQuery {
         String[] PROJECTION = {
                 ContactsContract.CommonDataKinds.Email.ADDRESS,
@@ -232,20 +236,15 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      */
     public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
 
-        private final String mEmail;
-        private final String mFirstName;
-        private final String mLastName;
-        private final String mGender;
-        private final boolean isGooglePlus;
-        private final boolean isFacebook;
 
         UserLoginTask(String email, String firstName, String lastName, String gender, boolean googlePlus, boolean facebook) {
-            mEmail = email;
-            mFirstName = firstName;
-            mLastName = lastName;
-            mGender = gender;
-            isGooglePlus = googlePlus;
-            isFacebook = facebook;
+            mUser = new User();
+            mUser.setmEmail(email);
+            mUser.setmFirstName(firstName);
+            mUser.setmLastName(lastName);
+            mUser.setmGender(gender);
+            mUser.setIsGooglePlus(googlePlus);
+            mUser.setIsFacebook(facebook);
         }
 
         @Override
@@ -270,16 +269,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
             if (success) {
 
-                mUser = new User();
-                mUser.setmEmail(mEmail);
-                mUser.setmFirstName(mFirstName);
-                mUser.setmLastName(mLastName);
-                mUser.setmGender(mGender);
-                mUser.setIsGooglePlus(isGooglePlus);
-                mUser.setIsFacebook(isFacebook);
-
                 dbAdapter.open();
-                dbAdapter.createUser(mEmail, mFirstName, mLastName, mGender, isGooglePlus, isFacebook);
+                dbAdapter.createUser(mUser);
 
                 Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
                 intent.putExtra("user",mUser);
@@ -292,6 +283,22 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             mAuthTask = null;
             showProgress(false);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Logs 'install' and 'app activate' App Events.
+        AppEventsLogger.activateApp(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        // Logs 'app deactivate' App Event.
+        AppEventsLogger.deactivateApp(this);
     }
 }
 

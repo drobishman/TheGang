@@ -6,6 +6,8 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.example.adria.thegang.model.User;
+
 /**
  * Created by Alessandro on 08/10/15.
  */
@@ -41,27 +43,27 @@ public class DbAdapter {
         dbHelper.close();
     }
 
-    private ContentValues createContentValues(String first_name, String last_name, String gender, String email, boolean google_plus, boolean facebook) {
+    private ContentValues createContentValues(User mUser) {
         ContentValues values = new ContentValues();
-        values.put(KEY_FIRST_NAME, first_name);
-        values.put(KEY_LAST_NAME, last_name);
-        values.put(KEY_GENDER, gender);
-        values.put(KEY_EMAIL, email);
-        values.put(KEY_GOOGLE_PLUS, google_plus);
-        values.put(KEY_FACEBOOK, facebook);
+        values.put(KEY_FIRST_NAME, mUser.getmFirstName());
+        values.put(KEY_LAST_NAME, mUser.getmLastName());
+        values.put(KEY_GENDER, mUser.getmGender());
+        values.put(KEY_EMAIL, mUser.getmEmail());
+        values.put(KEY_GOOGLE_PLUS, mUser.isGooglePlus());
+        values.put(KEY_FACEBOOK, mUser.isFacebook());
 
         return values;
     }
 
     //
-    public long createUser(String first_name, String last_name, String gender, String email, boolean google_plus, boolean facebook) {
-        ContentValues initialValues = createContentValues(first_name, last_name, gender, email, google_plus, facebook);
+    public long createUser(User mUser) {
+        ContentValues initialValues = createContentValues(mUser);
         return database.insertOrThrow(DATABASE_TABLE, null, initialValues);
     }
 
     //update a profile
-    public boolean updateUser(long ID, String first_name, String last_name, String gender, String email, boolean google_plus, boolean facebook) {
-        ContentValues updateValues = createContentValues(first_name, last_name, gender, email, google_plus, facebook);
+    public boolean updateUser(long ID, User mUser) {
+        ContentValues updateValues = createContentValues(mUser);
         return database.update(DATABASE_TABLE, updateValues, KEY_ID + "=" + ID, null) > 0;
     }
 
@@ -72,8 +74,8 @@ public class DbAdapter {
 
     //fetch profiles filter by a string
     public boolean isUser() {
-        String[] columns = {KEY_EMAIL};
-        Cursor res = database.query(DATABASE_TABLE, null, null, null, null, null, null);
+        String[] columns = {KEY_ID};
+        Cursor res = database.query(DATABASE_TABLE,columns,null,columns,null,null,null);
         return res.getCount() > 0;
     }
 }
