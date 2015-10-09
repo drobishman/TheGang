@@ -22,7 +22,7 @@ public class DbAdapter {
 
     private static final String LOG_TAG = DbAdapter.class.getSimpleName();
     // Database fields
-    private static final String DATABASE_TABLE = "profile";
+    private static final String DATABASE_TABLE = "user";
     private Context context;
     private SQLiteDatabase database;
     private DatabaseHelper dbHelper;
