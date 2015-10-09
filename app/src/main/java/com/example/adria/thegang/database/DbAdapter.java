@@ -49,8 +49,8 @@ public class DbAdapter {
     }
 
     //
-    public long createProfile(String name, String surname, String gender, String email) {
-        ContentValues initialValues = createContentValues(name, surname, gender, email);
+    public long createProfile(String name, String lastname, String gender, String email) {
+        ContentValues initialValues = createContentValues(name, lastname, gender, email);
         return database.insertOrThrow(DATABASE_TABLE, null, initialValues);
     }
 
