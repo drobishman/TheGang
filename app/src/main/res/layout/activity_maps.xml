@@ -4,6 +4,11 @@
     android:orientation="vertical"
     tools:context="com.example.adria.thegang.maps.MapsActivity">
 
+    <TextView
+        android:id="@+id/user"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|left"/>
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"

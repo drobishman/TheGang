@@ -8,6 +8,7 @@ import android.location.LocationManager;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
+import com.example.adria.thegang.model.User;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.location.places.Place;
@@ -25,6 +26,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -52,11 +54,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private List<Place> places = new ArrayList<>();
 
+    private User mUser;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN|WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+        Intent intent = getIntent();
+        mUser = (User) intent.getSerializableExtra("user");
+        TextView tv = (TextView) findViewById(R.id.user);
+        tv.setText("Welcome "+mUser.getmFirstName()+" "+mUser.getmLastName());
 
         activity = this;
 

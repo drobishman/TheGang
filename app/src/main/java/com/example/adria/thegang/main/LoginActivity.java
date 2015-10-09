@@ -33,7 +33,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.example.adria.thegang.R;
+import com.example.adria.thegang.database.DatabaseHelper;
+import com.example.adria.thegang.database.DbAdapter;
 import com.example.adria.thegang.map.MapsActivity;
+import com.example.adria.thegang.model.User;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
@@ -57,6 +60,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     private UserLoginTask mAuthTask = null;
+    private User mUser;
 
     private View mProgressView;
     private View mLoginFormView;
@@ -65,10 +69,14 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     protected LoginButton mFBLoginButton;
     private CallbackManager callbackManager;
 
+    // database
+    protected final DbAdapter dbAdapter = new DbAdapter(this);
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
@@ -90,10 +98,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                             public void onCompleted(JSONObject jsonObject, GraphResponse response) {
                                 try {
                                     Toast.makeText(getBaseContext(), "Welcome " + jsonObject.getString("first_name") + " " + jsonObject.getString("last_name"), Toast.LENGTH_SHORT).show();
-                                    mAuthTask = new UserLoginTask(jsonObject.getString("email"));
+                                    mAuthTask = new UserLoginTask(jsonObject.getString("email"), jsonObject.getString("first_name"), jsonObject.getString("last_name"), jsonObject.getString("gender"),false,true);
                                     mAuthTask.execute((Void) null);
-                                    Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
-                                    startActivity(intent);
                                 } catch (JSONException e) {
                                     e.printStackTrace();
                                 }
@@ -138,7 +144,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         if (mAuthTask != null) {
             return;
         }
-            showProgress(true);
+        showProgress(true);
     }
 
     /**
@@ -226,9 +232,19 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
 
         private final String mEmail;
+        private final String mFirstName;
+        private final String mLastName;
+        private final String mGender;
+        private final boolean isGooglePlus;
+        private final boolean isFacebook;
 
-        UserLoginTask(String email) {
+        UserLoginTask(String email, String firstName, String lastName, String gender, boolean googlePlus, boolean facebook) {
             mEmail = email;
+            mFirstName = firstName;
+            mLastName = lastName;
+            mGender = gender;
+            isGooglePlus = googlePlus;
+            isFacebook = facebook;
         }
 
         @Override
@@ -252,7 +268,20 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             showProgress(false);
 
             if (success) {
+
+                mUser = new User();
+                mUser.setmEmail(mEmail);
+                mUser.setmFirstName(mFirstName);
+                mUser.setmLastName(mLastName);
+                mUser.setmGender(mGender);
+                mUser.setIsGooglePlus(isGooglePlus);
+                mUser.setIsFacebook(isFacebook);
+
+                dbAdapter.open();
+                dbAdapter.createProfile(mEmail, mFirstName, mLastName, mGender,isGooglePlus,isFacebook);
+
                 Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
+                intent.putExtra("user",mUser);
                 startActivity(intent);
             }
         }
