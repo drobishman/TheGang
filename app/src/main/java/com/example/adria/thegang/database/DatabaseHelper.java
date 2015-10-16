@@ -14,7 +14,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 1;
 
     // Lo statement SQL di creazione del database
-    private static final String DATABASE_CREATE = "create table user (id integer primary key autoincrement, first_name text not null, last_name text not null, gender text not null, email text not null, google_plus bool not null, facebook bool not null)";
+    private static final String DATABASE_CREATE = "CREATE TABLE user (id integer primary key autoincrement, first_name text not null, last_name text not null, gender text not null, email text not null, google_plus bool not null, facebook bool not null)";
 
     // Costruttore
     public DatabaseHelper(Context context) {
@@ -31,7 +31,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase database, int oldVersion, int newVersion) {
 
-        database.execSQL("DROP TABLE IF EXISTS profile");
+        database.execSQL("DROP TABLE IF EXISTS user");
         onCreate(database);
     }
 }

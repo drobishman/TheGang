@@ -14,6 +14,8 @@ public class User implements Serializable {
     private  boolean isGooglePlus;
     private  boolean isFacebook;
 
+    public User(){}
+
     public User(String email,String firstName,String lastName,String gender,boolean googlePlus,boolean facebook){
         this.setmEmail(email);
         this.setmFirstName(firstName);

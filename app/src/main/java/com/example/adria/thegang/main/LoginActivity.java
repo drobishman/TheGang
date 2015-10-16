@@ -38,6 +38,8 @@ import com.example.adria.thegang.database.DatabaseHelper;
 import com.example.adria.thegang.database.DbAdapter;
 import com.example.adria.thegang.map.MapsActivity;
 import com.example.adria.thegang.model.User;
+import com.facebook.AccessToken;
+import com.facebook.AccessTokenTracker;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
@@ -45,8 +47,14 @@ import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.appevents.AppEventsLogger;
+import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.Scopes;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Scope;
+import com.google.android.gms.plus.Plus;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -55,7 +63,10 @@ import org.json.JSONObject;
 /**
  * A login screen that offers login via email/password.
  */
-public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<Cursor> {
+public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<Cursor>,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        View.OnClickListener {
 
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
@@ -66,12 +77,22 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private View mProgressView;
     private View mLoginFormView;
 
+    private JSONObject jo;
+
     // facebook
     protected LoginButton mFBLoginButton;
     private CallbackManager callbackManager;
+    private AccessTokenTracker fbTracker;
 
     // database
     protected final DbAdapter dbAdapter = new DbAdapter(this);
+
+    /* Request code used to invoke sign in user interactions. */
+    private static final int RC_SIGN_IN = 0;
+
+    /* Client used to interact with Google APIs. */
+    private GoogleApiClient mGoogleApiClient;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,7 +102,19 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
 
+        mAuthTask = new UserLoginTask();
+        mAuthTask.execute((Void[]) null);
+        showProgress(true);
 
+        // Build GoogleApiClient with access to basic profile
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(Plus.API)
+                .addScope(new Scope(Scopes.PROFILE))
+                .addScope(new Scope(Scopes.EMAIL))
+                .build();
+        findViewById(R.id.sign_in_button).setOnClickListener(this);
 
         FacebookSdk.sdkInitialize(getApplicationContext());
         callbackManager = CallbackManager.Factory.create();
@@ -100,15 +133,14 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                             public void onCompleted(JSONObject jsonObject, GraphResponse response) {
                                 try {
                                     Toast.makeText(getBaseContext(), "Welcome " + jsonObject.getString("first_name") + " " + jsonObject.getString("last_name"), Toast.LENGTH_SHORT).show();
-                                    mUser = new User(
-                                            jsonObject.getString("email"),
-                                            jsonObject.getString("first_name"),
-                                            jsonObject.getString("last_name"),
-                                            jsonObject.getString("gender"),
-                                            false,
-                                            true
-                                    );
-
+                                    jo = jsonObject;
+                                    jo.put("facebook", true);
+                                    dbAdapter.open();
+                                    if (dbAdapter.isUser()) {
+                                        jo.put("google_plus", true);
+                                    } else {
+                                        jo.put("google_plus", false);
+                                    }
                                     mAuthTask = new UserLoginTask();
                                     mAuthTask.execute((Void) null);
                                 } catch (JSONException e) {
@@ -121,7 +153,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 parameters.putString("fields", "id, first_name, last_name, email, gender");
                 meRequest.setParameters(parameters);
                 meRequest.executeAsync();
-                attemptLogin();
+                showProgress(true);
             }
 
             @Override
@@ -135,6 +167,17 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             }
         });
 
+        fbTracker = new AccessTokenTracker() {
+            @Override
+            protected void onCurrentAccessTokenChanged(AccessToken accessToken, AccessToken accessToken2) {
+                if (accessToken2 == null) {
+                    Toast.makeText(getBaseContext(), "Facebook Logout", Toast.LENGTH_SHORT).show();
+                    dbAdapter.open();
+                    dbAdapter.deleteUser();
+                }
+            }
+        };
+
     }
 
     @Override
@@ -143,32 +186,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         super.onActivityResult(requestCode, resultCode, data);
         // manage login results
         callbackManager.onActivityResult(requestCode, resultCode, data);
-    }
-
-
-    /**
-     * Attempts to sign in or register the account specified by the login form.
-     * If there are form errors (invalid email, missing fields, etc.), the
-     * errors are presented and no actual login attempt is made.
-     */
-    private void attemptLogin() {
-        if (mAuthTask != null)
-            return;
-        showProgress(true);
-    }
-
-    /**
-     * Check for user in local database to skip login autenthication
-     */
-    private void checkDatabase() {
-
-        if (mUser == null && dbAdapter.isUser()) {
-            Toast.makeText(this, "Preleva utente dal database locale", Toast.LENGTH_SHORT).show();
-            //mUser = dbAdapter.getUser();
-            Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
-            intent.putExtra("user", mUser);
-            startActivity(intent);
-        }
     }
 
     /**
@@ -239,6 +256,26 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
     }
 
+    @Override
+    public void onConnected(Bundle bundle) {
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onClick(View v) {
+
+    }
+
     private interface ProfileQuery {
         String[] PROJECTION = {
                 ContactsContract.CommonDataKinds.Email.ADDRESS,
@@ -253,39 +290,76 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
      */
-    public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
+    public class UserLoginTask extends AsyncTask<Void, Void, JSONObject> {
 
         @Override
-        protected Boolean doInBackground(Void... params) {
+        protected JSONObject doInBackground(Void... params) {
             // TODO: attempt authentication against a network service.
 
             try {
                 // Simulate network access.
                 Thread.sleep(2000);
             } catch (InterruptedException e) {
-                return false;
+                e.printStackTrace();
             }
 
             // TODO: register the new account here.
-            return true;
+            return jo;
         }
 
         @Override
-        protected void onPostExecute(final Boolean success) {
+        protected void onPostExecute(final JSONObject jo) {
             mAuthTask = null;
+
             showProgress(false);
 
-            if (success) {
+            dbAdapter.open();
 
-                dbAdapter.open();
-                dbAdapter.createUser(mUser);
-
-                dbAdapter.isUser();
-
+            if (dbAdapter.isUser()) {
+                Toast.makeText(getBaseContext(), "Login gia effettuato", Toast.LENGTH_SHORT).show();
+                mUser = dbAdapter.getUser();
+                Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
+                intent.putExtra("user", mUser);
+                startActivity(intent);
+            } else if (jo != null) {
+                try {
+                    if (jo.getBoolean("facebook")) {
+                        mUser = new User();
+                        try {
+                            mUser.setmEmail(jo.getString("email"));
+                            mUser.setmFirstName(jo.getString("first_name"));
+                            mUser.setmLastName(jo.getString("last_name"));
+                            mUser.setmGender(jo.getString("gender"));
+                            mUser.setIsFacebook(jo.getBoolean("facebook"));
+                            mUser.setIsFacebook(jo.getBoolean("google_plus"));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        dbAdapter.createUser(mUser);
+                    } else {
+                        if (jo.getBoolean("google_plus")) {
+                            mUser = new User();
+                            try {
+                                mUser.setmEmail(jo.getString("email"));
+                                mUser.setmFirstName(jo.getString("first_name"));
+                                mUser.setmLastName(jo.getString("last_name"));
+                                mUser.setmGender(jo.getString("gender"));
+                                mUser.setIsFacebook(jo.getBoolean("facebook"));
+                                mUser.setIsFacebook(jo.getBoolean("google_plus"));
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            dbAdapter.createUser(mUser);
+                        }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
                 Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
                 intent.putExtra("user", mUser);
                 startActivity(intent);
             }
+
         }
 
         @Override
@@ -309,6 +383,18 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         // Logs 'app deactivate' App Event.
         AppEventsLogger.deactivateApp(this);
+    }
+
+    @Override
+    protected void onStart (){
+        super.onStart();
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mGoogleApiClient.disconnect();
     }
 }
 

@@ -15,11 +15,8 @@
     <ScrollView android:id="@+id/login_form" android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <LinearLayout android:id="@+id/facebook_login_form" android:layout_width="match_parent"
+        <LinearLayout android:id="@+id/social_login_form" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:orientation="vertical">
-
-
-
             <com.facebook.login.widget.LoginButton
                 android:id="@+id/fb_login_button"
                 android:layout_width="wrap_content"
@@ -28,7 +25,13 @@
                 android:layout_marginTop="30dp"
                 android:layout_marginBottom="30dp" />
 
-
+            <com.google.android.gms.common.SignInButton
+                android:id="@+id/sign_in_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="60dp"
+                android:layout_marginBottom="60dp"/>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

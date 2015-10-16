@@ -76,16 +76,36 @@ public class DbAdapter {
     }
 
     //delete a profile
-    public boolean deleteUser(long ID) {
-        return database.delete(DATABASE_TABLE, KEY_ID + "=" + ID, null) > 0;
+    public boolean deleteUser() {
+        return database.delete(DATABASE_TABLE, null, null) > 0;
     }
 
     //fetch profiles filter by a string
     public boolean isUser() {
-        String[] columns = {KEY_ID};
-        Cursor res = database.rawQuery("select * from "+DATABASE_TABLE,null);
-        res.moveToFirst();
-        Log.d("THEGANG",res.getString(1)+" "+res.getString(2));
-        return res.getCount() > 0;
+        if(database!=null) {
+            Cursor cursor = database.rawQuery("select * from " + DATABASE_TABLE, null);
+            cursor.moveToFirst();
+            return cursor.getCount() > 0;
+        }else{
+            Log.d(LOG_TAG, "database error!!!");
+            return false;
+        }
+    }
+
+    //get a user from database
+    public User getUser (){
+
+        User user = new User();
+
+        Cursor cursor = database.rawQuery("select * from "+DATABASE_TABLE,null);
+        cursor.moveToFirst();
+        user.setmFirstName(cursor.getString(1));
+        user.setmLastName(cursor.getString(2));
+        user.setmGender(cursor.getString(3));
+        user.setmEmail(cursor.getString(4));
+        user.setIsGooglePlus(cursor.getString(5).equals("1"));
+        user.setIsFacebook(cursor.getString(6).equals("1"));
+
+        return user;
     }
 }
