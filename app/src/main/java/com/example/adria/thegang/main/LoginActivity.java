@@ -1,9 +1,16 @@
 package com.example.adria.thegang.main;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
+import android.content.pm.PackageManager;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.app.LoaderManager.LoaderCallbacks;
 
@@ -16,16 +23,8 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.text.TextUtils;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.inputmethod.EditorInfo;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,7 +33,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.example.adria.thegang.R;
-import com.example.adria.thegang.database.DatabaseHelper;
 import com.example.adria.thegang.database.DbAdapter;
 import com.example.adria.thegang.map.MapsActivity;
 import com.example.adria.thegang.model.User;
@@ -47,14 +45,15 @@ import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.appevents.AppEventsLogger;
-import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.plus.Plus;
+import com.google.android.gms.plus.model.people.Person;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -87,11 +86,27 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     // database
     protected final DbAdapter dbAdapter = new DbAdapter(this);
 
-    /* Request code used to invoke sign in user interactions. */
-    private static final int RC_SIGN_IN = 0;
-
     /* Client used to interact with Google APIs. */
     private GoogleApiClient mGoogleApiClient;
+
+    /* Is there a ConnectionResult resolution in progress? */
+    private boolean mIsResolving = false;
+
+    /* Should we automatically resolve ConnectionResults when possible? */
+    private boolean mShouldResolve = false;
+
+    /* View to display current status (signed-in, signed-out, disconnected, etc) */
+    private TextView mStatus;
+
+
+    /* RequestCode for resolutions involving sign-in */
+    private static final int RC_SIGN_IN = 1;
+
+    /* RequestCode for resolutions to get GET_ACCOUNTS permission on M */
+    private static final int RC_PERM_GET_ACCOUNTS = 2;
+
+
+    private static final String TAG = "MainActivity";
 
 
     @Override
@@ -106,6 +121,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         mAuthTask.execute((Void[]) null);
         showProgress(true);
 
+        // Set up view instances
+        mStatus = (TextView) findViewById(R.id.status);
+
+
         // Build GoogleApiClient with access to basic profile
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
@@ -115,6 +134,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 .addScope(new Scope(Scopes.EMAIL))
                 .build();
         findViewById(R.id.sign_in_button).setOnClickListener(this);
+        findViewById(R.id.sign_out_button).setOnClickListener(this);
 
         FacebookSdk.sdkInitialize(getApplicationContext());
         callbackManager = CallbackManager.Factory.create();
@@ -124,7 +144,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
             @Override
             public void onSuccess(LoginResult loginResult) {
-                Toast.makeText(getBaseContext(), "Facebook Login Success", Toast.LENGTH_SHORT);
+                Toast.makeText(getBaseContext(), "Facebook Login Success", Toast.LENGTH_SHORT).show();
 
                 GraphRequest meRequest = GraphRequest.newMeRequest(
                         loginResult.getAccessToken(),
@@ -181,11 +201,22 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        // manage login results
+
         callbackManager.onActivityResult(requestCode, resultCode, data);
+
+        Log.d(TAG, "onActivityResult:" + requestCode + ":" + resultCode + ":" + data);
+
+        if (requestCode == RC_SIGN_IN) {
+            // If the error resolution was not successful we should not resolve further.
+            if (resultCode != RESULT_OK) {
+                mShouldResolve = false;
+            }
+
+            mIsResolving = false;
+            mGoogleApiClient.connect();
+        }
     }
 
     /**
@@ -258,7 +289,14 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
     @Override
     public void onConnected(Bundle bundle) {
+        // onConnected indicates that an account was selected on the device, that the selected
+        // account has granted any requested permissions to our app and that we were able to
+        // establish a service connection to Google Play services.
+        Log.d(TAG, "onConnected:" + bundle);
+        mShouldResolve = false;
 
+        // Show the signed-in UI
+        showSignedInUI();
     }
 
     @Override
@@ -268,13 +306,180 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
+        // Could not connect to Google Play Services.  The user needs to select an account,
+        // grant permissions or resolve an error in order to sign in. Refer to the javadoc for
+        // ConnectionResult to see possible error codes.
+        Log.d(TAG, "onConnectionFailed:" + connectionResult);
 
+        if (!mIsResolving && mShouldResolve) {
+            if (connectionResult.hasResolution()) {
+                try {
+                    connectionResult.startResolutionForResult(this, RC_SIGN_IN);
+                    mIsResolving = true;
+                } catch (IntentSender.SendIntentException e) {
+                    Log.e(TAG, "Could not resolve ConnectionResult.", e);
+                    mIsResolving = false;
+                    mGoogleApiClient.connect();
+                }
+            } else {
+                // Could not resolve the connection result, show the user an
+                // error dialog.
+                showErrorDialog(connectionResult);
+            }
+        } else {
+            // Show the signed-out UI
+            showSignedOutUI();
+        }
+    }
+
+    /**
+     * Check if we have the GET_ACCOUNTS permission and request it if we do not.
+     * @return true if we have the permission, false if we do not.
+     */
+    private boolean checkAccountsPermission() {
+        final String perm = Manifest.permission.GET_ACCOUNTS;
+        int permissionCheck = ContextCompat.checkSelfPermission(this, perm);
+        if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+            // We have the permission
+            return true;
+        } else if (ActivityCompat.shouldShowRequestPermissionRationale(this, perm)) {
+            // Need to show permission rationale, display a snackbar and then request
+            // the permission again when the snackbar is dismissed.
+            Snackbar.make(findViewById(R.id.main_layout),
+                    R.string.contacts_permission_rationale,
+                    Snackbar.LENGTH_INDEFINITE)
+                    .setAction(android.R.string.ok, new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            // Request the permission again.
+                            ActivityCompat.requestPermissions(LoginActivity.this,
+                                    new String[]{perm},
+                                    RC_PERM_GET_ACCOUNTS);
+                        }
+                    }).show();
+            return false;
+        } else {
+            // No explanation needed, we can request the permission.
+            ActivityCompat.requestPermissions(this,
+                    new String[]{perm},
+                    RC_PERM_GET_ACCOUNTS);
+            return false;
+        }
+    }
+
+    private void updateUI(boolean isSignedIn) {
+        if (isSignedIn) {
+            Person currentPerson = Plus.PeopleApi.getCurrentPerson(mGoogleApiClient);
+            if (currentPerson != null) {
+                // Show signed-in user's name
+                String name = currentPerson.getDisplayName();
+                mStatus.setText(getString(R.string.signed_in_fmt, name));
+
+                // Show users' email address (which requires GET_ACCOUNTS permission)
+                if (checkAccountsPermission()) {
+                    String currentAccount = Plus.AccountApi.getAccountName(mGoogleApiClient);
+                    ((TextView) findViewById(R.id.email)).setText(currentAccount);
+                }
+            } else {
+                // If getCurrentPerson returns null there is generally some error with the
+                // configuration of the application (invalid Client ID, Plus API not enabled, etc).
+                Log.w(TAG, getString(R.string.error_null_person));
+                mStatus.setText(getString(R.string.signed_in_err));
+            }
+
+            // Set button visibility
+            findViewById(R.id.sign_in_button).setVisibility(View.GONE);
+            findViewById(R.id.sign_out_and_disconnect).setVisibility(View.VISIBLE);
+        } else {
+            // Show signed-out message and clear email field
+            mStatus.setText(R.string.signed_out);
+            ((TextView) findViewById(R.id.email)).setText("");
+
+            // Set button visibility
+            findViewById(R.id.sign_in_button).setEnabled(true);
+            findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
+            findViewById(R.id.sign_out_and_disconnect).setVisibility(View.GONE);
+        }
+    }
+
+    private void showSignedInUI() {
+        updateUI(true);
+    }
+
+    private void showSignedOutUI() {
+        updateUI(false);
+    }
+
+    private void showErrorDialog(ConnectionResult connectionResult) {
+        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+        int resultCode = apiAvailability.isGooglePlayServicesAvailable(this);
+
+        if (resultCode != ConnectionResult.SUCCESS) {
+            if (apiAvailability.isUserResolvableError(resultCode)) {
+                apiAvailability.getErrorDialog(this, resultCode, RC_SIGN_IN,
+                        new DialogInterface.OnCancelListener() {
+                            @Override
+                            public void onCancel(DialogInterface dialog) {
+                                mShouldResolve = false;
+                                showSignedOutUI();
+                            }
+                        }).show();
+            } else {
+                Log.w("TheGang", "Google Play Services Error:" + connectionResult);
+                String errorString = apiAvailability.getErrorString(resultCode);
+                Toast.makeText(this, errorString, Toast.LENGTH_SHORT).show();
+
+                mShouldResolve = false;
+                showSignedOutUI();
+            }
+        }
     }
 
     @Override
     public void onClick(View v) {
-
+        switch (v.getId()) {
+            case R.id.sign_in_button:
+                onSignInClicked();
+                break;
+            case R.id.sign_out_button:
+                onSignOutClicked();
+                break;
+        }
     }
+
+    private void onSignOutClicked() {
+        // Clear the default account so that GoogleApiClient will not automatically
+        // connect in the future.
+        if (mGoogleApiClient.isConnected()) {
+            Plus.AccountApi.clearDefaultAccount(mGoogleApiClient);
+            mGoogleApiClient.disconnect();
+        }
+        showSignedOutUI();
+    }
+
+    private void onSignInClicked() {
+        // User clicked the sign-in button, so begin the sign-in process and automatically
+        // attempt to resolve any errors that occur.
+        mShouldResolve = true;
+        mGoogleApiClient.connect();
+
+        // Show a message to the user that we are signing in.
+        mStatus.setText(R.string.signing_in);
+    }
+
+    // [START on_disconnect_clicked]
+    private void onDisconnectClicked() {
+        // Revoke all granted permissions and clear the default account.  The user will have
+        // to pass the consent screen to sign in again.
+        if (mGoogleApiClient.isConnected()) {
+            Plus.AccountApi.clearDefaultAccount(mGoogleApiClient);
+            Plus.AccountApi.revokeAccessAndDisconnect(mGoogleApiClient);
+            mGoogleApiClient.disconnect();
+        }
+
+        showSignedOutUI();
+    }
+    // [END on_disconnect_clicked]
 
     private interface ProfileQuery {
         String[] PROJECTION = {

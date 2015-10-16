@@ -5,7 +5,8 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.example.adria.thegang.main.LoginActivity">
+    tools:context="com.example.adria.thegang.main.LoginActivity"
+    android:id="@+id/main_layout">
 
     <!-- Login progress -->
     <ProgressBar android:id="@+id/login_progress" style="?android:attr/progressBarStyleLarge"
@@ -17,21 +18,59 @@
 
         <LinearLayout android:id="@+id/social_login_form" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:orientation="vertical">
-            <com.facebook.login.widget.LoginButton
-                android:id="@+id/fb_login_button"
+
+            <TextView
+                android:id="@+id/email"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="@android:color/holo_blue_bright"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/signed_out"
+                android:textColor="@android:color/holo_blue_bright"
+                android:textSize="14sp" />
+
+            <com.facebook.login.widget.LoginButton
+                android:id="@+id/fb_login_button"
+                android:layout_width="150dp"
+                android:layout_height="40dp"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="30dp"
                 android:layout_marginBottom="30dp" />
 
             <com.google.android.gms.common.SignInButton
                 android:id="@+id/sign_in_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="150dp"
+                android:layout_height="40dp"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="60dp"
-                android:layout_marginBottom="60dp"/>
+                android:layout_marginBottom="60dp"
+                android:focusable="false" />
+
+            <LinearLayout
+                android:id="@+id/sign_out_and_disconnect"
+                android:layout_width="150dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="60dp"
+                android:layout_marginBottom="60dp"
+                android:visibility="gone"
+                android:weightSum="2"
+                tools:visibility="visible">
+
+                <Button
+                    android:id="@+id/sign_out_button"
+                    android:layout_width="150dp"
+                    android:layout_height="40dp"
+                    android:text="@string/sign_out"
+                    android:background="@drawable/button_border"
+                    android:textColor="@android:color/white" />
+            </LinearLayout>
+
         </LinearLayout>
     </ScrollView>
 </LinearLayout>
