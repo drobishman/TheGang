@@ -25,7 +25,6 @@ import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -35,6 +34,8 @@ import java.util.List;
 import com.example.adria.thegang.R;
 import com.example.adria.thegang.database.DbAdapter;
 import com.example.adria.thegang.map.MapsActivity;
+import com.example.adria.thegang.model.FacebookProfile;
+import com.example.adria.thegang.model.GooglePlusProfile;
 import com.example.adria.thegang.model.User;
 import com.facebook.AccessToken;
 import com.facebook.AccessTokenTracker;
@@ -71,12 +72,11 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     private UserLoginTask mAuthTask = null;
-    private User mUser;
+
+    private User mUser = new User();
 
     private View mProgressView;
     private View mLoginFormView;
-
-    private JSONObject jo;
 
     // facebook
     protected LoginButton mFBLoginButton;
@@ -94,10 +94,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
     /* Should we automatically resolve ConnectionResults when possible? */
     private boolean mShouldResolve = false;
-
-    /* View to display current status (signed-in, signed-out, disconnected, etc) */
-    private TextView mStatus;
-
 
     /* RequestCode for resolutions involving sign-in */
     private static final int RC_SIGN_IN = 1;
@@ -120,9 +116,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         mAuthTask = new UserLoginTask();
         mAuthTask.execute((Void[]) null);
         showProgress(true);
-
-        // Set up view instances
-        mStatus = (TextView) findViewById(R.id.status);
 
 
         // Build GoogleApiClient with access to basic profile
@@ -153,14 +146,12 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                             public void onCompleted(JSONObject jsonObject, GraphResponse response) {
                                 try {
                                     Toast.makeText(getBaseContext(), "Welcome " + jsonObject.getString("first_name") + " " + jsonObject.getString("last_name"), Toast.LENGTH_SHORT).show();
-                                    jo = jsonObject;
-                                    jo.put("facebook", true);
-                                    dbAdapter.open();
-                                    if (dbAdapter.isUser()) {
-                                        jo.put("google_plus", true);
-                                    } else {
-                                        jo.put("google_plus", false);
-                                    }
+                                    Log.d(TAG, jsonObject.toString());
+                                    mUser.getFacebookProfile().setId(jsonObject.getString("id"));
+                                    mUser.getFacebookProfile().setFirstName(jsonObject.getString("first_name"));
+                                    mUser.getFacebookProfile().setLastName(jsonObject.getString("last_name"));
+                                    mUser.getFacebookProfile().setEmail(jsonObject.getString("email"));
+                                    mUser.getFacebookProfile().setGender(jsonObject.getString("gender"));
                                     mAuthTask = new UserLoginTask();
                                     mAuthTask.execute((Void) null);
                                 } catch (JSONException e) {
@@ -334,6 +325,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
     /**
      * Check if we have the GET_ACCOUNTS permission and request it if we do not.
+     *
      * @return true if we have the permission, false if we do not.
      */
     private boolean checkAccountsPermission() {
@@ -369,36 +361,43 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
     private void updateUI(boolean isSignedIn) {
         if (isSignedIn) {
+            dbAdapter.open();
             Person currentPerson = Plus.PeopleApi.getCurrentPerson(mGoogleApiClient);
             if (currentPerson != null) {
-                // Show signed-in user's name
-                String name = currentPerson.getDisplayName();
-                mStatus.setText(getString(R.string.signed_in_fmt, name));
 
                 // Show users' email address (which requires GET_ACCOUNTS permission)
                 if (checkAccountsPermission()) {
-                    String currentAccount = Plus.AccountApi.getAccountName(mGoogleApiClient);
-                    ((TextView) findViewById(R.id.email)).setText(currentAccount);
+                    Log.d(TAG, "" + Plus.AccountApi.getAccountName(mGoogleApiClient) + " "
+                            + currentPerson.getName().getFamilyName() + " "
+                            + currentPerson.getName().getGivenName() + " "
+                            + currentPerson.getId() + " "
+                            + currentPerson.getLanguage() + " "
+                            + currentPerson.getGender() + " ");
+
+                    mUser.getGooglePlusProfile().setId(currentPerson.getId());
+                    mUser.getGooglePlusProfile().setFamilyName(currentPerson.getName().getFamilyName());
+                    mUser.getGooglePlusProfile().setGivenName(currentPerson.getName().getGivenName());
+                    mUser.getGooglePlusProfile().setEmail(Plus.AccountApi.getAccountName(mGoogleApiClient));
+                    mUser.getGooglePlusProfile().setGender(currentPerson.getGender());
+
+                    showProgress(true);
+                    mAuthTask = new UserLoginTask();
+                    mAuthTask.execute((Void) null);
                 }
             } else {
                 // If getCurrentPerson returns null there is generally some error with the
                 // configuration of the application (invalid Client ID, Plus API not enabled, etc).
-                Log.w(TAG, getString(R.string.error_null_person));
-                mStatus.setText(getString(R.string.signed_in_err));
+                Toast.makeText(getBaseContext(), getString(R.string.error_null_person), Toast.LENGTH_SHORT).show();
             }
 
             // Set button visibility
             findViewById(R.id.sign_in_button).setVisibility(View.GONE);
-            findViewById(R.id.sign_out_and_disconnect).setVisibility(View.VISIBLE);
+            findViewById(R.id.sign_out).setVisibility(View.VISIBLE);
         } else {
-            // Show signed-out message and clear email field
-            mStatus.setText(R.string.signed_out);
-            ((TextView) findViewById(R.id.email)).setText("");
-
             // Set button visibility
             findViewById(R.id.sign_in_button).setEnabled(true);
             findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
-            findViewById(R.id.sign_out_and_disconnect).setVisibility(View.GONE);
+            findViewById(R.id.sign_out).setVisibility(View.GONE);
         }
     }
 
@@ -425,7 +424,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                             }
                         }).show();
             } else {
-                Log.w("TheGang", "Google Play Services Error:" + connectionResult);
+                Log.w(TAG, "Google Play Services Error:" + connectionResult);
                 String errorString = apiAvailability.getErrorString(resultCode);
                 Toast.makeText(this, errorString, Toast.LENGTH_SHORT).show();
 
@@ -455,6 +454,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             mGoogleApiClient.disconnect();
         }
         showSignedOutUI();
+        Toast.makeText(getBaseContext(), "Google+ Logout", Toast.LENGTH_SHORT).show();
+        dbAdapter.open();
+        dbAdapter.deleteUser();
     }
 
     private void onSignInClicked() {
@@ -462,24 +464,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         // attempt to resolve any errors that occur.
         mShouldResolve = true;
         mGoogleApiClient.connect();
-
-        // Show a message to the user that we are signing in.
-        mStatus.setText(R.string.signing_in);
     }
-
-    // [START on_disconnect_clicked]
-    private void onDisconnectClicked() {
-        // Revoke all granted permissions and clear the default account.  The user will have
-        // to pass the consent screen to sign in again.
-        if (mGoogleApiClient.isConnected()) {
-            Plus.AccountApi.clearDefaultAccount(mGoogleApiClient);
-            Plus.AccountApi.revokeAccessAndDisconnect(mGoogleApiClient);
-            mGoogleApiClient.disconnect();
-        }
-
-        showSignedOutUI();
-    }
-    // [END on_disconnect_clicked]
 
     private interface ProfileQuery {
         String[] PROJECTION = {
@@ -495,76 +480,40 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
      */
-    public class UserLoginTask extends AsyncTask<Void, Void, JSONObject> {
+    public class UserLoginTask extends AsyncTask<Void, Void, User> {
 
         @Override
-        protected JSONObject doInBackground(Void... params) {
+        protected User doInBackground(Void... params) {
             // TODO: attempt authentication against a network service.
 
             try {
                 // Simulate network access.
                 Thread.sleep(2000);
+                mUser.setId(1);
+                mUser.setName("unknown");
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
-            // TODO: register the new account here.
-            return jo;
+            return mUser;
         }
 
         @Override
-        protected void onPostExecute(final JSONObject jo) {
+        protected void onPostExecute(User resultUser) {
             mAuthTask = null;
 
             showProgress(false);
 
             dbAdapter.open();
 
-            if (dbAdapter.isUser()) {
-                Toast.makeText(getBaseContext(), "Login gia effettuato", Toast.LENGTH_SHORT).show();
-                mUser = dbAdapter.getUser();
+            if (dbAdapter.hasUser()) {
+                Toast.makeText(getBaseContext(), "Login effettuato", Toast.LENGTH_SHORT).show();
+                resultUser = dbAdapter.getUser();
                 Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
-                intent.putExtra("user", mUser);
+                intent.putExtra("user", resultUser);
                 startActivity(intent);
-            } else if (jo != null) {
-                try {
-                    if (jo.getBoolean("facebook")) {
-                        mUser = new User();
-                        try {
-                            mUser.setmEmail(jo.getString("email"));
-                            mUser.setmFirstName(jo.getString("first_name"));
-                            mUser.setmLastName(jo.getString("last_name"));
-                            mUser.setmGender(jo.getString("gender"));
-                            mUser.setIsFacebook(jo.getBoolean("facebook"));
-                            mUser.setIsFacebook(jo.getBoolean("google_plus"));
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        dbAdapter.createUser(mUser);
-                    } else {
-                        if (jo.getBoolean("google_plus")) {
-                            mUser = new User();
-                            try {
-                                mUser.setmEmail(jo.getString("email"));
-                                mUser.setmFirstName(jo.getString("first_name"));
-                                mUser.setmLastName(jo.getString("last_name"));
-                                mUser.setmGender(jo.getString("gender"));
-                                mUser.setIsFacebook(jo.getBoolean("facebook"));
-                                mUser.setIsFacebook(jo.getBoolean("google_plus"));
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                            dbAdapter.createUser(mUser);
-                        }
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
-                intent.putExtra("user", mUser);
-                startActivity(intent);
-            }
+            } else {
 
+            }
         }
 
         @Override
@@ -591,7 +540,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     }
 
     @Override
-    protected void onStart (){
+    protected void onStart() {
         super.onStart();
         mGoogleApiClient.connect();
     }

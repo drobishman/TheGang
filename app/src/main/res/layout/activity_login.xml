@@ -19,21 +19,6 @@
         <LinearLayout android:id="@+id/social_login_form" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/email"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@android:color/holo_blue_bright"
-                android:textSize="14sp" />
-
-            <TextView
-                android:id="@+id/status"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/signed_out"
-                android:textColor="@android:color/holo_blue_bright"
-                android:textSize="14sp" />
-
             <com.facebook.login.widget.LoginButton
                 android:id="@+id/fb_login_button"
                 android:layout_width="150dp"
@@ -52,7 +37,7 @@
                 android:focusable="false" />
 
             <LinearLayout
-                android:id="@+id/sign_out_and_disconnect"
+                android:id="@+id/sign_out"
                 android:layout_width="150dp"
                 android:layout_height="40dp"
                 android:layout_gravity="center_horizontal"

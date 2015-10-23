@@ -7,69 +7,41 @@ import java.io.Serializable;
  */
 public class User implements Serializable {
 
-    private  String mEmail;
-    private  String mFirstName;
-    private  String mLastName;
-    private  String mGender;
-    private  boolean isGooglePlus;
-    private  boolean isFacebook;
+    private int id;
+    private String name;
 
-    public User(){}
+    private FacebookProfile facebookProfile = new FacebookProfile();
+    private GooglePlusProfile googlePlusProfile = new GooglePlusProfile();
 
-    public User(String email,String firstName,String lastName,String gender,boolean googlePlus,boolean facebook){
-        this.setmEmail(email);
-        this.setmFirstName(firstName);
-        this.setmLastName(lastName);
-        this.setmGender(gender);
-        this.setIsGooglePlus(googlePlus);
-        this.setIsFacebook(facebook);
+    public FacebookProfile getFacebookProfile() {
+        return facebookProfile;
     }
 
-    public String getmEmail() {
-        return mEmail;
+    public void setFacebookProfile(FacebookProfile facebookProfile) {
+        this.facebookProfile = facebookProfile;
     }
 
-    public void setmEmail(String mEmail) {
-        this.mEmail = mEmail;
+    public GooglePlusProfile getGooglePlusProfile() {
+        return googlePlusProfile;
     }
 
-    public String getmFirstName() {
-        return mFirstName;
+    public void setGooglePlusProfile(GooglePlusProfile googlePlusProfile) {
+        this.googlePlusProfile = googlePlusProfile;
     }
 
-    public void setmFirstName(String mFirstName) {
-        this.mFirstName = mFirstName;
+    public int getId() {
+        return id;
     }
 
-    public String getmLastName() {
-        return mLastName;
+    public void setId(int id) {
+        this.id = id;
     }
 
-    public void setmLastName(String mLastName) {
-        this.mLastName = mLastName;
+    public String getName() {
+        return name;
     }
 
-    public String getmGender() {
-        return mGender;
-    }
-
-    public void setmGender(String mGender) {
-        this.mGender = mGender;
-    }
-
-    public boolean isGooglePlus() {
-        return isGooglePlus;
-    }
-
-    public void setIsGooglePlus(boolean isGooglePlus) {
-        this.isGooglePlus = isGooglePlus;
-    }
-
-    public boolean isFacebook() {
-        return isFacebook;
-    }
-
-    public void setIsFacebook(boolean isFacebook) {
-        this.isFacebook = isFacebook;
+    public void setName(String name) {
+        this.name = name;
     }
 }
