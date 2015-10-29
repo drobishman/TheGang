@@ -110,13 +110,20 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        dbAdapter.open();
+
+        if (dbAdapter.hasUser()) {
+            Toast.makeText(getBaseContext(), "Login effettuato", Toast.LENGTH_SHORT).show();
+            mUser = dbAdapter.getUser();
+            Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
+            intent.putExtra("user", mUser);
+            startActivity(intent);
+        }
+
+        dbAdapter.close();
+
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
-
-        mAuthTask = new UserLoginTask();
-        mAuthTask.execute((Void[]) null);
-        showProgress(true);
-
 
         // Build GoogleApiClient with access to basic profile
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -379,10 +386,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     mUser.getGooglePlusProfile().setGivenName(currentPerson.getName().getGivenName());
                     mUser.getGooglePlusProfile().setEmail(Plus.AccountApi.getAccountName(mGoogleApiClient));
                     mUser.getGooglePlusProfile().setGender(currentPerson.getGender());
-
-                    showProgress(true);
-                    mAuthTask = new UserLoginTask();
-                    mAuthTask.execute((Void) null);
                 }
             } else {
                 // If getCurrentPerson returns null there is generally some error with the
@@ -464,6 +467,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         // attempt to resolve any errors that occur.
         mShouldResolve = true;
         mGoogleApiClient.connect();
+        showProgress(true);
+        mAuthTask = new UserLoginTask();
+        mAuthTask.execute((Void) null);
     }
 
     private interface ProfileQuery {
@@ -505,14 +511,19 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
             dbAdapter.open();
 
-            if (dbAdapter.hasUser()) {
-                Toast.makeText(getBaseContext(), "Login effettuato", Toast.LENGTH_SHORT).show();
-                resultUser = dbAdapter.getUser();
+            if (!dbAdapter.hasUser()) {
+                dbAdapter.createUser(resultUser);
+                Log.d(TAG, "ID facebook " + mUser.getFacebookProfile().getId());
+                Log.d(TAG, "ID google plus "+mUser.getGooglePlusProfile().getId());
+                if (mUser.getFacebookProfile().getId() != null) {
+                    dbAdapter.createFacebookProfile(mUser.getFacebookProfile());
+                }
+                if (mUser.getGooglePlusProfile().getId() != null) {
+                    dbAdapter.createGooglePlusProfile(mUser.getGooglePlusProfile());
+                }
                 Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
                 intent.putExtra("user", resultUser);
                 startActivity(intent);
-            } else {
-
             }
         }
 

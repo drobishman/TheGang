@@ -1,9 +1,11 @@
 package com.example.adria.thegang.model;
 
+import java.io.Serializable;
+
 /**
  * Created by adria on 20/10/2015.
  */
-public class FacebookProfile {
+public class FacebookProfile implements Serializable{
 
     private String id;
     private String firstName;

@@ -15,18 +15,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     // The statement SQL creating the user table
     private static final String USER_TABLE_CREATE = "CREATE TABLE user (" +
-            "id integer primary key autoincrement, " +
+            "id integer primary key, " +
             "name text not null " +
             ")";
     private static final String FACEBOOK_PROFILE_TABLE_CREATE = "CREATE TABLE facebook_profile (" +
-            "id integer primary key, " +
+            "id text not null primary key, " +
             "first_name text not null, " +
             "last_name text not null, " +
             "email text not null, " +
             "gender text not null " +
             ")";
     private static final String GOOGLE_PLUS_PROFILE_TABLE_CREATE = "CREATE TABLE google_plus_profile (" +
-            "id integer primary key, " +
+            "id text not null primary key, " +
             "family_name text not null, " +
             "given_name text not null, " +
             "email text not null, " +

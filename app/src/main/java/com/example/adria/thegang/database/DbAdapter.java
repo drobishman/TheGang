@@ -23,7 +23,6 @@ public class DbAdapter {
     private static final String GOOGLE_PLUS_PROFILE_TABLE = "google_plus_profile";
 
 
-
     private Context context;
     private SQLiteDatabase database;
     private DatabaseHelper dbHelper;
@@ -63,7 +62,7 @@ public class DbAdapter {
         return values;
     }
 
-    private ContentValues createGooglePlusPrifileContentValues(GooglePlusProfile googlePlusProfile) {
+    private ContentValues createGooglePlusProfileContentValues(GooglePlusProfile googlePlusProfile) {
         ContentValues values = new ContentValues();
 
         values.put("id", googlePlusProfile.getId());
@@ -81,12 +80,12 @@ public class DbAdapter {
     }
 
     public long createFacebookProfile(FacebookProfile facebookProfile) {
-        ContentValues initialValues =  createFacebookPrifileContentValues(facebookProfile);
+        ContentValues initialValues = createFacebookPrifileContentValues(facebookProfile);
         return database.insertOrThrow(FACEBOOK_PROFILE_TABLE, null, initialValues);
     }
 
-    public long createFacebookProfile(GooglePlusProfile googlePlusProfile) {
-        ContentValues initialValues = createGooglePlusPrifileContentValues(googlePlusProfile);
+    public long createGooglePlusProfile(GooglePlusProfile googlePlusProfile) {
+        ContentValues initialValues = createGooglePlusProfileContentValues(googlePlusProfile);
         return database.insertOrThrow(GOOGLE_PLUS_PROFILE_TABLE, null, initialValues);
     }
 
@@ -98,7 +97,7 @@ public class DbAdapter {
 
     //update a profile
     public boolean updateGooglePlusProfile(long ID, GooglePlusProfile googlePlusProfile) {
-        ContentValues updateValues = createGooglePlusPrifileContentValues(googlePlusProfile);
+        ContentValues updateValues = createGooglePlusProfileContentValues(googlePlusProfile);
         return database.update(GOOGLE_PLUS_PROFILE_TABLE, updateValues, "id" + "=" + ID, null) > 0;
     }
 
@@ -126,11 +125,11 @@ public class DbAdapter {
 
     //fetch profiles filter by a string
     public boolean hasUser() {
-        if(database!=null) {
+        if (database != null) {
             Cursor cursor = database.rawQuery("select * from " + USER_TABLE, null);
             cursor.moveToFirst();
-            return cursor.getCount()>0;
-        }else{
+            return cursor.getCount() > 0;
+        } else {
             Log.d(LOG_TAG, "database error!!!");
             return false;
         }
@@ -138,11 +137,11 @@ public class DbAdapter {
 
     //fetch profiles filter by a string
     public boolean hasFacebookProfile() {
-        if(database!=null) {
+        if (database != null) {
             Cursor cursor = database.rawQuery("select * from " + FACEBOOK_PROFILE_TABLE, null);
             cursor.moveToFirst();
-            return cursor.getCount()>0;
-        }else{
+            return cursor.getCount() > 0;
+        } else {
             Log.d(LOG_TAG, "database error!!!");
             return false;
         }
@@ -150,64 +149,65 @@ public class DbAdapter {
 
     //fetch profiles filter by a string
     public boolean hasGooglePlusProfile() {
-        if(database!=null) {
+        if (database != null) {
             Cursor cursor = database.rawQuery("select * from " + GOOGLE_PLUS_PROFILE_TABLE, null);
             cursor.moveToFirst();
-            return cursor.getCount()>0;
-        }else{
+            return cursor.getCount() > 0;
+        } else {
             Log.d(LOG_TAG, "database error!!!");
             return false;
         }
     }
 
-    public FacebookProfile getFacebookProfile(){
+    public FacebookProfile getFacebookProfile() {
 
         FacebookProfile facebookProfile = new FacebookProfile();
 
-        Cursor cursor = database.rawQuery("select * from "+FACEBOOK_PROFILE_TABLE,null);
+        Cursor cursor = database.rawQuery("select * from " + FACEBOOK_PROFILE_TABLE, null);
         cursor.moveToFirst();
-        facebookProfile.setId(cursor.getString(1));
-        facebookProfile.setFirstName(cursor.getString(2));
-        facebookProfile.setLastName(cursor.getString(3));
-        facebookProfile.setEmail(cursor.getString(4));
-        facebookProfile.setGender(cursor.getString(5));
+        facebookProfile.setId(cursor.getString(0));
+        facebookProfile.setFirstName(cursor.getString(1));
+        facebookProfile.setLastName(cursor.getString(2));
+        facebookProfile.setEmail(cursor.getString(3));
+        facebookProfile.setGender(cursor.getString(4));
 
         return facebookProfile;
 
     }
 
-    public GooglePlusProfile getGooglePlusProfile(){
+    public GooglePlusProfile getGooglePlusProfile() {
 
-       GooglePlusProfile googlePlusProfile = new GooglePlusProfile();
+        GooglePlusProfile googlePlusProfile = new GooglePlusProfile();
 
-        Cursor cursor = database.rawQuery("select * from "+FACEBOOK_PROFILE_TABLE,null);
+        Cursor cursor = database.rawQuery("select * from " + GOOGLE_PLUS_PROFILE_TABLE, null);
         cursor.moveToFirst();
-       googlePlusProfile.setId(cursor.getString(1));
-       googlePlusProfile.setFamilyName(cursor.getString(2));
-        googlePlusProfile.setGivenName(cursor.getString(3));
-        googlePlusProfile.setEmail(cursor.getString(4));
-        googlePlusProfile.setGender(cursor.getInt(5));
+        googlePlusProfile.setId(cursor.getString(0));
+        googlePlusProfile.setFamilyName(cursor.getString(1));
+        googlePlusProfile.setGivenName(cursor.getString(2));
+        googlePlusProfile.setEmail(cursor.getString(3));
+        googlePlusProfile.setGender(cursor.getInt(4));
 
         return googlePlusProfile;
 
     }
 
 
-    public User getUser (){
+    public User getUser() {
 
         User user = new User();
 
-        Cursor cursor = database.rawQuery("select * from "+USER_TABLE,null);
+        Cursor cursor = database.rawQuery("select * from " + USER_TABLE, null);
 
-            cursor.moveToFirst();
-            user.setId(cursor.getInt(1));
-            user.setName(cursor.getString(2));
-        if(this.hasFacebookProfile()){
+        cursor.moveToFirst();
+        user.setId(cursor.getInt(0));
+        user.setName(cursor.getString(1));
+        if (this.hasFacebookProfile()) {
             user.setFacebookProfile(this.getFacebookProfile());
         }
-        if(hasGooglePlusProfile()){
+        if (hasGooglePlusProfile()) {
             user.setGooglePlusProfile(this.getGooglePlusProfile());
         }
+        Log.d("database", "" + user.getName() + " " + user.getId() + " " + user.getFacebookProfile().getEmail() + " " + user.getGooglePlusProfile().getEmail());
         return user;
     }
 }
