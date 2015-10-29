@@ -34,8 +34,6 @@ import java.util.List;
 import com.example.adria.thegang.R;
 import com.example.adria.thegang.database.DbAdapter;
 import com.example.adria.thegang.map.MapsActivity;
-import com.example.adria.thegang.model.FacebookProfile;
-import com.example.adria.thegang.model.GooglePlusProfile;
 import com.example.adria.thegang.model.User;
 import com.facebook.AccessToken;
 import com.facebook.AccessTokenTracker;
