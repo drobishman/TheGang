@@ -189,7 +189,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 if (accessToken2 == null) {
                     Toast.makeText(getBaseContext(), "Facebook Logout", Toast.LENGTH_SHORT).show();
                     dbAdapter.open();
+                    dbAdapter.deleteGooglePlusProfile();
+                    dbAdapter.deleteFacebookProfile();
                     dbAdapter.deleteUser();
+                    dbAdapter.close();
                 }
             }
         };
@@ -384,6 +387,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     mUser.getGooglePlusProfile().setGivenName(currentPerson.getName().getGivenName());
                     mUser.getGooglePlusProfile().setEmail(Plus.AccountApi.getAccountName(mGoogleApiClient));
                     mUser.getGooglePlusProfile().setGender(currentPerson.getGender());
+
+                    showProgress(true);
+                    mAuthTask = new UserLoginTask();
+                    mAuthTask.execute((Void) null);
                 }
             } else {
                 // If getCurrentPerson returns null there is generally some error with the
@@ -457,17 +464,18 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         showSignedOutUI();
         Toast.makeText(getBaseContext(), "Google+ Logout", Toast.LENGTH_SHORT).show();
         dbAdapter.open();
+        dbAdapter.deleteGooglePlusProfile();
+        dbAdapter.deleteFacebookProfile();
         dbAdapter.deleteUser();
+        dbAdapter.close();
     }
 
     private void onSignInClicked() {
         // User clicked the sign-in button, so begin the sign-in process and automatically
         // attempt to resolve any errors that occur.
+
         mShouldResolve = true;
         mGoogleApiClient.connect();
-        showProgress(true);
-        mAuthTask = new UserLoginTask();
-        mAuthTask.execute((Void) null);
     }
 
     private interface ProfileQuery {
@@ -523,6 +531,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 intent.putExtra("user", resultUser);
                 startActivity(intent);
             }
+
+            dbAdapter.close();
         }
 
         @Override

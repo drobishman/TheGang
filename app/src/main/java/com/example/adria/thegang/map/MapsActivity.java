@@ -62,10 +62,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+        /*TODO: Recover user credentials from another activity
         Intent intent = getIntent();
+
         mUser = (User) intent.getSerializableExtra("user");
         TextView tv = (TextView) findViewById(R.id.user);
         tv.setText("Welcome " + mUser.getName());
+        */
 
         activity = this;
 
@@ -124,19 +127,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
 
-
-        GoogleMap mMap = googleMap;
-
-        mMap.clear();
+        googleMap.clear();
 
         if (!places.isEmpty()) {
             for (Place temp : places)
-                mMap.addMarker(new MarkerOptions().position(temp.getLatLng()).title(temp.getName().toString()));
+                googleMap.addMarker(new MarkerOptions().position(temp.getLatLng()).title(temp.getName().toString()));
         }
 
-        mMap.addMarker(new MarkerOptions().position(myLocation).title("My Location"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(myLocation));
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(15.5f));
+        googleMap.addMarker(new MarkerOptions().position(myLocation).title("My Location"));
+        googleMap.moveCamera(CameraUpdateFactory.newLatLng(myLocation));
+        googleMap.animateCamera(CameraUpdateFactory.zoomTo(15.5f));
     }
 
     @TargetApi(Build.VERSION_CODES.M)
@@ -187,7 +187,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 button.setEnabled(true);
             }
 
-          myLocation = new LatLng(location.getLatitude(),location.getLongitude());
+            myLocation = new LatLng(location.getLatitude(), location.getLongitude());
         }
 
         @Override
