@@ -24,6 +24,14 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|left"
             android:text="@string/my_position" />
+
+        <Button
+            android:id="@+id/login_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|left"
+            android:text="@string/login_button" />
+
         <Button
             android:id="@+id/button_place_picker"
             android:layout_width="wrap_content"

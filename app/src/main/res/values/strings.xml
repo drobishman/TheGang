@@ -6,6 +6,7 @@
     <string name="place_picker">place picker</string>
     <string name="title_activity_maps_activity_test">Map</string>
     <string name="title_activity_login">Sign in</string>
+    <string name="login_button">Login button</string>
 
     <!-- Strings related to login -->
     <string name="prompt_email">Email</string>
